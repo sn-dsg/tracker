@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Прогресс</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#fff;--fg:#000;--mut:#8a8a8a;--line:#e8e8e8}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#000;--fg:#fff;--mut:#7c7c7c;--line:#222}}
+:root[data-theme=dark]{--bg:#000;--fg:#fff;--mut:#7c7c7c;--line:#222}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--fg);font:300 15px/1.4 Inter,system-ui,sans-serif;padding:max(28px,env(safe-area-inset-top)) 22px max(44px,env(safe-area-inset-bottom));display:flex;justify-content:center}
+main{width:100%;max-width:460px}
+section{margin-top:34px;opacity:0;transform:translateY(16px);animation:up .7s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i)*90ms)}
+@keyframes up{to{opacity:1;transform:none}}
+.lbl{font-size:13px;color:var(--mut)}
+#score{font-size:104px;font-weight:200;letter-spacing:-.04em;line-height:1;position:relative;display:inline-block;font-variant-numeric:tabular-nums;margin-top:4px}
+.bump{animation:bump .45s}@keyframes bump{40%{transform:scale(1.08)}}
+.shake{animation:shake .45s}@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+.fl{position:absolute;right:-8px;top:6px;font-size:22px;font-weight:400;animation:fl 1s forwards;pointer-events:none}
+@keyframes fl{to{transform:translateY(-42px);opacity:0}}
+.sub{display:flex;gap:18px;color:var(--mut);margin-top:8px}
+.bar{height:2px;background:var(--line);margin-top:18px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--fg);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.row{display:flex;gap:10px}
+.btn{position:relative;overflow:hidden;flex:1;padding:15px;border-radius:99px;border:1px solid var(--fg);font:400 15px Inter,system-ui,sans-serif;cursor:pointer;transition:transform .15s}
+.btn:active{transform:scale(.95)}
+.p{background:var(--fg);color:var(--bg)}.m{background:none;color:var(--fg)}
+.rp{position:absolute;border-radius:50%;background:currentColor;opacity:.25;transform:scale(0);animation:rp .6s forwards;pointer-events:none}
+@keyframes rp{to{transform:scale(1);opacity:0}}
+.in{position:relative;margin-top:22px}
+input{width:100%;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);font:300 17px Inter,system-ui,sans-serif;padding:10px 0;outline:0;border-radius:0}
+.in::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:var(--fg);transform:scaleX(0);transition:transform .4s}
+.in:focus-within::after{transform:scaleX(1)}
+.head{display:flex;justify-content:space-between;align-items:baseline}
+.tabs button{background:none;border:0;border-bottom:1px solid transparent;color:var(--mut);font:400 13px Inter,system-ui,sans-serif;padding:2px 0;margin-left:14px;cursor:pointer}
+.tabs .on{color:var(--fg);border-color:var(--fg)}
+#tip{height:20px;margin-top:10px;font-size:13px;color:var(--mut)}
+svg{width:100%;height:auto;display:block;touch-action:pan-y;overflow:visible}
+.ln{fill:none;stroke:var(--fg);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ar{fill:var(--fg);opacity:0;transition:opacity .8s .5s}.ar.show{opacity:.07}
+.heat{display:grid;grid-template-columns:repeat(16,1fr);grid-template-rows:repeat(7,auto);grid-auto-flow:column;gap:3px;margin-top:12px}
+.heat i{aspect-ratio:1;border-radius:3px;background:var(--line);opacity:0;animation:fi .4s forwards;animation-delay:calc(var(--d)*10ms)}
+.heat i.neg{background:repeating-linear-gradient(45deg,var(--mut) 0 1px,transparent 1px 4px)}
+@keyframes fi{to{opacity:1}}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+.day{display:flex;justify-content:space-between;margin-top:22px}
+.it{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);max-height:64px;transition:all .35s;overflow:hidden}
+.it.new{animation:in .5s}@keyframes in{from{opacity:0;transform:translateY(-12px)}}
+.it.out{opacity:0;transform:translateX(60px);max-height:0;padding:0}
+.it b{width:28px;font-weight:400}.it span{flex:1;word-break:break-word}.it small{color:var(--mut)}
+.it button{background:none;border:0;color:var(--mut);font-size:16px;cursor:pointer;padding:4px}
+#goal{position:fixed;inset:0;display:grid;place-content:center;text-align:center;background:var(--bg);opacity:0;pointer-events:none;transition:opacity .5s}
+#goal.on{opacity:.97;pointer-events:auto}
+#goal b{display:block;font-size:130px;font-weight:200;line-height:1;transform:scale(.8);transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+#goal.on b{transform:none}
+button:focus-visible,input:focus-visible{outline:1px solid var(--fg);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main>
+<section style="--i:0">
+  <div class="lbl">Счёт</div>
+  <div id="score"><span id="num">0</span></div>
+  <div class="sub"><span id="td"></span><span id="st"></span></div>
+  <div class="bar"><i id="gb"></i></div>
+  <div class="sub" style="justify-content:space-between;margin-top:8px"><span id="gl"></span><span id="gn"></span></div>
+</section>
+<section style="--i:1">
+  <div class="row"><button class="btn p" id="up">+1 прогресс</button><button class="btn m" id="dn">−1 пустой день</button></div>
+  <div class="in"><input id="tx" placeholder="Что сделал сегодня?" maxlength="80" autocomplete="off"></div>
+</section>
+<section style="--i:2">
+  <div class="head"><span class="lbl">Динамика</span>
+    <span class="tabs"><button data-m="week" class="on">Неделя</button><button data-m="month">Месяц</button><button data-m="all">Всё</button></span></div>
+  <div id="tip"></div><div id="ch"></div>
+</section>
+<section style="--i:3">
+  <div class="lbl">Активность за 16 недель</div>
+  <div class="heat" id="hm"></div>
+  <div class="note">Тёмная клетка — день с прогрессом, штрих — день в минусе.</div>
+</section>
+<section style="--i:4">
+  <div class="lbl">История</div>
+  <div id="hs"></div>
+</section>
+</main>
+<div id="goal"><div><b></b><div class="lbl" style="margin-top:12px">Цель достигнута</div></div></div>
+
+<script>
+const $=s=>document.querySelector(s),fmt=n=>(n<0?'−':'')+Math.abs(n),pad=n=>String(n).padStart(2,'0');
+const dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const sod=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const GOALS=[10,25,50,100,250,500,1000];
+const tg=window.Telegram&&Telegram.WebApp,inTg=!!(tg&&tg.initData);
+if(inTg){tg.ready();tg.expand();document.documentElement.dataset.theme=tg.colorScheme}
+const cs=inTg&&tg.isVersionAtLeast&&tg.isVersionAtLeast('6.9')?tg.CloudStorage:null;
+const P=f=>new Promise(r=>f((e,v)=>r(e?null:v)));
+const LS='sndsg-progress';
+let D={u:0,e:[]},shown=0,mode='week',newId=null,timer;
+
+/* ---------- хранение: Telegram CloudStorage + localStorage ---------- */
+async function load(){
+  let L=null,C=null;
+  try{L=JSON.parse(localStorage.getItem(LS))}catch(e){}
+  if(cs){
+    const n=+(await P(c=>cs.getItem('n',c))||0);
+    if(n){
+      const ks=[...Array(n).keys()].map(i=>'d'+i),v=await P(c=>cs.getItems(ks,c));
+      if(v)try{C=JSON.parse(ks.map(k=>v[k]).join(''))}catch(e){}
+    }
+  }
+  return [L,C].filter(Boolean).sort((a,b)=>b.u-a.u)[0]||{u:0,e:[]};
+}
+function save(){
+  D.u=Date.now();
+  try{localStorage.setItem(LS,JSON.stringify(D))}catch(e){}
+  if(!cs)return;
+  clearTimeout(timer);
+  timer=setTimeout(async()=>{
+    const ch=JSON.stringify(D).match(/[\s\S]{1,3000}/g)||[];
+    for(let i=0;i<ch.length;i++)await P(c=>cs.setItem('d'+i,ch[i],c));
+    const old=+(await P(c=>cs.getItem('n',c))||0);
+    await P(c=>cs.setItem('n',String(ch.length),c));
+    if(old>ch.length)await P(c=>cs.removeItems([...Array(old-ch.length).keys()].map(i=>'d'+(ch.length+i)),c));
+  },400);
+}
+
+/* ---------- данные ---------- */
+const total=()=>D.e.reduce((s,x)=>s+x.v,0);
+function stats(){const m={};D.e.forEach(x=>{const k=dk(x.t),o=m[k]=m[k]||{n:0,p:0};o.n+=x.v;if(x.v>0)o.p=1});return m}
+function auto(){ // −1 за каждый прошлый день без единой записи
+  if(!D.e.length)return;
+  const has=new Set(D.e.map(x=>dk(x.t))),today=sod(Date.now());let add=0;
+  for(const d=sod(Math.min(...D.e.map(x=>x.t)));d<today;d.setDate(d.getDate()+1)){
+    if(!has.has(dk(d))){D.e.push({id:uid(),t:new Date(d).setHours(23,59,0,0),v:-1,x:'Пропущенный день',a:1});add++}
+  }
+  if(add)save();
+}
+function streak(st){
+  const d=sod(Date.now());let s=0;
+  if(!(st[dk(d)]&&st[dk(d)].p))d.setDate(d.getDate()-1);
+  while(st[dk(d)]&&st[dk(d)].p){s++;d.setDate(d.getDate()-1)}
+  return s;
+}
+
+/* ---------- отрисовка ---------- */
+function count(to){
+  const el=$('#num'),from=shown,t0=performance.now(),dur=from===to?0:Math.min(900,300+Math.abs(to-from)*40);
+  shown=to;
+  (function f(t){const p=dur?Math.min(1,(t-t0)/dur):1,e=1-Math.pow(1-p,3);
+    el.textContent=fmt(Math.round(from+(to-from)*e));if(p<1)requestAnimationFrame(f)})(t0);
+}
+function renderTop(){
+  const st=stats(),sc=total(),n=(st[dk(Date.now())]||{n:0}).n,s=streak(st);
+  $('#td').textContent='Сегодня '+(n>0?'+':'')+fmt(n);
+  $('#st').textContent='Серия '+s+' дн.';
+  const got=GOALS.filter(g=>g<=sc),lv=got.length,pv=got.length?got[got.length-1]:0,nx=GOALS.find(g=>g>sc)||Math.ceil((sc+1)/500)*500;
+  $('#gl').textContent='Уровень '+lv;
+  $('#gn').textContent='До '+nx+' ещё '+(nx-sc);
+  $('#gb').style.width=Math.max(0,(sc-pv)/(nx-pv))*100+'%';
+}
+function chart(){
+  const st=stats(),today=sod(Date.now());
+  let start=sod(today);
+  if(mode=='all'){
+    start=D.e.length?sod(Math.min(...D.e.map(x=>x.t))):today;
+    const min=new Date(today);min.setDate(min.getDate()-6);if(start>min)start=min;
+  }else start.setDate(start.getDate()-(mode=='week'?6:29));
+  let c=D.e.filter(x=>x.t<start.getTime()).reduce((s,x)=>s+x.v,0);
+  const pts=[];
+  for(const d=new Date(start);d<=today;d.setDate(d.getDate()+1)){c+=(st[dk(d)]||{n:0}).n;pts.push({d:new Date(d),v:c})}
+  const W=320,H=150,px=6,py=14,vs=pts.map(p=>p.v);
+  let lo=Math.min(...vs),hi=Math.max(...vs);if(lo==hi){lo--;hi++}
+  const X=i=>px+(W-2*px)*(pts.length>1?i/(pts.length-1):.5),Y=v=>H-py-(H-2*py)*(v-lo)/(hi-lo);
+  let p='M'+X(0)+','+Y(vs[0]);
+  for(let i=1;i<pts.length;i++){const m=(X(i-1)+X(i))/2;p+=`C${m},${Y(vs[i-1])} ${m},${Y(vs[i])} ${X(i)},${Y(vs[i])}`}
+  $('#ch').innerHTML=`<svg viewBox="0 0 ${W} ${H}">${lo<0&&hi>0?`<line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--mut)" stroke-dasharray="3 4" stroke-width=".7"/>`:''}<path class="ar" d="${p}L${X(pts.length-1)},${H}L${X(0)},${H}Z"/><path class="ln" d="${p}"/><line id="mk" y1="0" y2="${H}" stroke="var(--fg)" stroke-width=".6" opacity="0"/><circle id="dt" r="3.5" fill="var(--fg)" opacity="0"/></svg>`;
+  const ln=$('#ch .ln'),L=ln.getTotalLength();
+  ln.style.cssText=`stroke-dasharray:${L};stroke-dashoffset:${L}`;
+  ln.getBoundingClientRect();
+  ln.style.transition='stroke-dashoffset 1.2s cubic-bezier(.3,.7,.2,1)';ln.style.strokeDashoffset=0;
+  $('#ch .ar').classList.add('show');
+  const svg=$('#ch svg'),mk=$('#mk'),dt=$('#dt');
+  const mv=e=>{
+    const r=svg.getBoundingClientRect(),i=Math.max(0,Math.min(pts.length-1,Math.round(((e.clientX-r.left)/r.width*W-px)/(W-2*px)*(pts.length-1))));
+    mk.setAttribute('x1',X(i));mk.setAttribute('x2',X(i));dt.setAttribute('cx',X(i));dt.setAttribute('cy',Y(vs[i]));
+    mk.setAttribute('opacity',.5);dt.setAttribute('opacity',1);
+    $('#tip').textContent=pts[i].d.toLocaleDateString('ru',{day:'numeric',month:'long'})+' · счёт '+fmt(vs[i]);
+  };
+  const off=()=>{mk.setAttribute('opacity',0);dt.setAttribute('opacity',0);$('#tip').textContent=''};
+  svg.addEventListener('pointerdown',mv);svg.addEventListener('pointermove',mv);
+  svg.addEventListener('pointerleave',off);svg.addEventListener('pointercancel',off);
+}
+function heat(){
+  const st=stats(),t=sod(Date.now()),s=new Date(t);
+  s.setDate(s.getDate()-((t.getDay()+6)%7)-15*7);
+  let h='',i=0;
+  for(const d=new Date(s);d<=t;d.setDate(d.getDate()+1),i++){
+    const n=(st[dk(d)]||{n:0}).n,bg=n>0?`;background:color-mix(in srgb,var(--fg) ${[0,28,50,75,100][Math.min(4,n)]}%,var(--bg))`:'';
+    h+=`<i class="${n<0?'neg':''}" style="--d:${i}${bg}" title="${dk(d)}: ${fmt(n)}"></i>`;
+  }
+  $('#hm').innerHTML=h;
+}
+function hist(){
+  const g={},today=dk(Date.now()),yd=dk(sod(Date.now()).getTime()-36e5);
+  [...D.e].sort((a,b)=>b.t-a.t).forEach(x=>(g[dk(x.t)]=g[dk(x.t)]||[]).push(x));
+  $('#hs').innerHTML=Object.keys(g).map(k=>{
+    const l=g[k],n=l.reduce((s,x)=>s+x.v,0);
+    return `<div class="day lbl"><span>${k==today?'Сегодня':k==yd?'Вчера':new Date(l[0].t).toLocaleDateString('ru',{day:'numeric',month:'long'})}</span><span>${n>0?'+':''}${fmt(n)}</span></div>`+
+    l.map(x=>{const d=new Date(x.t);return `<div class="it${x.id==newId?' new':''}" data-id="${x.id}"><b>${x.v>0?'+1':'−1'}</b><span>${esc(x.x)}</span><small>${pad(d.getHours())}:${pad(d.getMinutes())}</small>${x.a?'':'<button aria-label="Удалить">✕</button>'}</div>`}).join('');
+  }).join('')||'<p class="lbl" style="margin-top:14px">Пока пусто. Напиши, что сделал, и нажми «+1 прогресс».</p>';
+  newId=null;
+}
+const refresh=()=>{renderTop();chart();heat();hist()};
+
+/* ---------- действия ---------- */
+const haptic=k=>{if(inTg&&tg.HapticFeedback)tg.HapticFeedback.impactOccurred(k);else if(navigator.vibrate)navigator.vibrate(k=='light'?15:[30,40,30])};
+function add(v){
+  const inp=$('#tx'),old=total(),e={id:uid(),t:Date.now(),v,x:inp.value.trim()||(v>0?'Прогресс':'Пустой день')};
+  D.e.push(e);newId=e.id;inp.value='';save();
+  const nw=old+v,sc=$('#score');
+  count(nw);refresh();
+  sc.classList.remove('bump','shake');sc.getBoundingClientRect();sc.classList.add(v>0?'bump':'shake');
+  if(v>0){const f=document.createElement('span');f.className='fl';f.textContent='+1';sc.append(f);setTimeout(()=>f.remove(),1000)}
+  haptic(v>0?'light':'heavy');
+  const g=GOALS.find(g=>old<g&&nw>=g);if(g)celebrate(g);
+}
+function celebrate(g){
+  $('#goal b').textContent=g;$('#goal').classList.add('on');
+  if(inTg&&tg.HapticFeedback)tg.HapticFeedback.notificationOccurred('success');
+  setTimeout(()=>$('#goal').classList.remove('on'),2400);
+}
+$('#goal').onclick=()=>$('#goal').classList.remove('on');
+$('#up').onclick=()=>add(1);$('#dn').onclick=()=>add(-1);
+$('#tx').onkeydown=e=>{if(e.key=='Enter')add(1)};
+document.querySelector('.tabs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  mode=b.dataset.m;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x==b));chart();
+};
+$('#hs').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const it=b.closest('.it');it.classList.add('out');
+  setTimeout(()=>{D.e=D.e.filter(x=>x.id!=it.dataset.id);save();count(total());refresh()},350);
+};
+document.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.btn');if(!b)return;
+  const r=b.getBoundingClientRect(),s=Math.max(r.width,r.height)*2,sp=document.createElement('span');
+  sp.className='rp';sp.style.cssText=`width:${s}px;height:${s}px;left:${e.clientX-r.left-s/2}px;top:${e.clientY-r.top-s/2}px`;
+  b.append(sp);setTimeout(()=>sp.remove(),600);
+});
+
+/* ---------- старт ---------- */
+async function init(){D=await load();auto();count(total());refresh()}
+init();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)init()});
+</script>
+</body>
+</html>
